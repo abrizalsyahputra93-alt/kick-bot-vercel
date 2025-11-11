@@ -1,100 +1,126 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kick Bot Padang</title>
-<script src="https://unpkg.com/crypto-js@4.2.0/crypto-js.js"></script>
-<style>
-/* sama seperti sebelumnya, bisa copy style lama */
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kick Bot Padang</title>
+  <script src="https://unpkg.com/crypto-js@4.2.0/crypto-js.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', sans-serif; }
+    body { background: linear-gradient(135deg, #1e3c72, #2a5298); color:white; min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px; }
+    .card { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); border-radius:20px; padding:30px; width:100%; max-width:450px; box-shadow:0 10px 30px rgba(0,0,0,0.3); }
+    h1 { text-align:center; margin-bottom:10px; font-size:28px; }
+    p { text-align:center; margin-bottom:20px; opacity:0.85; }
+    input, button { width:100%; padding:14px; margin:10px 0; border:none; border-radius:12px; font-size:16px; }
+    input { background: rgba(255,255,255,0.2); color:white; }
+    input::placeholder { color: rgba(255,255,255,0.7); }
+    button { background:#00d26a; color:white; font-weight:bold; cursor:pointer; transition:0.3s; }
+    button:hover { background:#00b359; transform:translateY(-2px); }
+    .status { text-align:center; margin-top:15px; font-size:14px; opacity:0.85; }
+    .error { color:#ff6b6b; background: rgba(255,107,107,0.1); padding:10px; border-radius:8px; margin:10px 0; text-align:center; }
+  </style>
 </head>
 <body>
-<div class="card">
-<h1>Kick Bot Padang</h1>
-<p>Bot chat interaktif</p>
+  <div class="card">
+    <h1>Kick Bot Padang</h1>
+    <p>Bot chat otomatis dari Sumatera Barat</p>
 
-<div id="login">
-  <button onclick="loginKick()">Login dengan Kick</button>
-</div>
+    <div id="login">
+      <button onclick="loginKick()">Login dengan Kick</button>
+    </div>
 
-<div id="bot" style="display:none;">
-  <input type="text" id="channel" placeholder="Masukkan channel">
-  <input type="text" id="msgInput" placeholder="Ketik command">
-  <button onclick="sendCommand()">Kirim Command</button>
-  <div class="status" id="status">Siap...</div>
-</div>
+    <div id="bot" style="display:none;">
+      <input type="text" id="channel" placeholder="Masukkan channel (contoh: xqc)">
+      <button onclick="startBot()">Start Bot</button>
+      <div class="status" id="status">Siap...</div>
+    </div>
 
-<div id="error" class="error" style="display:none;"></div>
-</div>
+    <div id="error" class="error" style="display:none;"></div>
+  </div>
 
-<script>
-const CLIENT_ID = '01K9SEDGKEAB4KH7WAJ8Q2XGVD';
-const CLIENT_SECRET = '8fe491a2b6fe3949673e9228d824efb477a90de7425c8b8f8a564ecb039a2225';
-const REDIRECT_URI = window.location.origin + window.location.pathname;
-let token = null;
-let verifier = null;
+  <script>
+    const CLIENT_ID = '01K9SEDGKEAB4KH7WAJ8Q2XGVD';
+    const CLIENT_SECRET = '8fe491a2b6fe3949673e9228d824efb477a90de7425c8b8f8a564ecb039a2225';
+    const REDIRECT_URI = window.location.origin + '/index.html';
+    let token = null;
 
-function generatePKCE(){
-  verifier = CryptoJS.lib.WordArray.random(32).toString(CryptoJS.enc.Base64url);
-  const challenge = CryptoJS.SHA256(verifier).toString(CryptoJS.enc.Base64url)
-    .replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
-  sessionStorage.setItem('pkce_verifier', verifier);
-  return challenge;
-}
+    function loginKick() {
+      if (!CLIENT_ID || CLIENT_ID.includes('GANTI')) return showError('Isi CLIENT_ID di script!');
 
-function loginKick(){
-  const challenge = generatePKCE();
-  window.location.href = `https://kick.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=chat:read chat:write&code_challenge=${challenge}&code_challenge_method=S256&state=dummy`;
-}
-
-async function handleCallback(){
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  if(code){
-    try{
-      const res = await fetch('/api/auth', {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({
-          code, client_id: CLIENT_ID, client_secret: CLIENT_SECRET, redirect_uri: REDIRECT_URI, verifier
-        })
+      const params = new URLSearchParams({
+        client_id: CLIENT_ID,
+        redirect_uri: REDIRECT_URI,
+        response_type: 'code',
+        scope: 'chat:read chat:write',
+        state: 'kick-bot-padang'
       });
-      const data = await res.json();
-      if(data.access_token){
-        token = data.access_token;
-        document.getElementById('login').style.display='none';
-        document.getElementById('bot').style.display='block';
-        document.getElementById('status').textContent='Login sukses!';
-        history.replaceState({}, '', REDIRECT_URI);
-      } else showError('Gagal login');
-    } catch(e){ showError(e.message); }
-  }
-}
 
-async function sendCommand(){
-  const channel = document.getElementById('channel').value.trim();
-  const msg = document.getElementById('msgInput').value.trim();
-  if(!channel || !msg) return showError('Channel & command harus diisi!');
-  try{
-    const res = await fetch('/api/send',{
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ channel, message: msg, token })
-    });
-    const data = await res.json();
-    if(data.success) document.getElementById('status').textContent=`Terkirim: ${msg}`;
-    else showError(data.error || 'Gagal kirim pesan');
-  } catch(e){ showError(e.message); }
-}
+      window.location.href = `https://kick.com/oauth/authorize?${params.toString()}`;
+    }
 
-function showError(msg){
-  const e = document.getElementById('error');
-  e.textContent = msg; e.style.display='block';
-  setTimeout(()=>{e.style.display='none'},4000);
-}
+    async function exchangeToken(code) {
+      try {
+        // Panggil endpoint Vercel API (buat sendiri di /api/auth) untuk tukar code jadi access token
+        const res = await fetch(`/api/auth?code=${code}`);
+        const data = await res.json();
+        if (data.access_token) {
+          token = data.access_token;
+          sessionStorage.setItem('kick_token', token);
+          document.getElementById('login').style.display = 'none';
+          document.getElementById('bot').style.display = 'block';
+          document.getElementById('status').textContent = 'Login sukses!';
+          history.replaceState({}, '', REDIRECT_URI);
+        } else {
+          showError(data.error || 'Gagal tukar token');
+        }
+      } catch (err) {
+        showError(err.message);
+      }
+    }
 
-window.addEventListener('load', handleCallback);
-</script>
+    function handleCallback() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      if (code) exchangeToken(code);
+    }
+
+    function showError(msg) {
+      const e = document.getElementById('error');
+      e.textContent = msg;
+      e.style.display = 'block';
+      setTimeout(() => e.style.display = 'none', 5000);
+    }
+
+    async function sendMessage(channel, message) {
+      const token = sessionStorage.getItem('kick_token');
+      if (!token) return showError('Login dulu!');
+
+      try {
+        const res = await fetch(`https://kick.com/api/v2/channels/${channel}/messages/send`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: message })
+        });
+        const data = await res.json();
+        if (data.error) showError(data.error.message || 'Gagal kirim pesan');
+      } catch (err) {
+        showError(err.message);
+      }
+    }
+
+    function startBot() {
+      const channel = document.getElementById('channel').value.trim();
+      if (!channel) return showError('Masukkan channel!');
+
+      document.getElementById('status').textContent = `Bot aktif di #${channel}!`;
+
+      // Contoh: kirim pesan setiap 10 detik
+      setInterval(() => {
+        sendMessage(channel, 'Halo dari Kick Bot Padang!');
+      }, 10000);
+    }
+
+    window.addEventListener('load', handleCallback);
+  </script>
 </body>
 </html>
