@@ -1,36 +1,29 @@
-// /api/auth.js
+import fetch from 'node-fetch';
+
 export default async function handler(req, res) {
-  const { code } = req.query;
+  const code = req.query.code;
+  if(!code) return res.status(400).json({ error:'Missing code' });
 
-  if (!code) return res.status(400).json({ error: 'Code OAuth tidak ada' });
-
-  const CLIENT_ID = process.env.KICK_CLIENT_ID;
-  const CLIENT_SECRET = process.env.KICK_CLIENT_SECRET;
-  const REDIRECT_URI = process.env.KICK_REDIRECT_URI;
+  const client_id = process.env.KICK_CLIENT_ID;
+  const client_secret = process.env.KICK_CLIENT_SECRET;
+  const redirect_uri = process.env.KICK_REDIRECT_URI;
 
   const params = new URLSearchParams({
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
+    client_id, client_secret,
     code,
-    grant_type: 'authorization_code',
-    redirect_uri: REDIRECT_URI
+    grant_type:'authorization_code',
+    redirect_uri
   });
 
   try {
-    const response = await fetch('https://kick.com/oauth/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    const r = await fetch('https://kick.com/oauth/token', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
       body: params.toString()
     });
-
-    const data = await response.json();
-
-    if (data.access_token) {
-      res.status(200).json({ access_token: data.access_token });
-    } else {
-      res.status(400).json({ error: data.error_description || 'Gagal tukar token' });
-    }
-  } catch (err) {
+    const data = await r.json();
+    res.status(200).json(data);
+  } catch(err) {
     res.status(500).json({ error: err.message });
   }
 }
