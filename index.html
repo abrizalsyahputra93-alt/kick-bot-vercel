@@ -6,17 +6,18 @@
   <title>Kick Bot Padang</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
-    body { background:linear-gradient(135deg,#1e3c72,#2a5298); color:white; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
-    .card { background:rgba(255,255,255,0.1); backdrop-filter:blur(10px); border-radius:20px; padding:30px; width:100%; max-width:400px; box-shadow:0 10px 30px rgba(0,0,0,0.3); }
-    h1 { text-align:center; margin-bottom:10px; font-size:28px; }
-    p { text-align:center; margin-bottom:20px; opacity:0.9; }
-    input,button { width:100%; padding:14px; margin:10px 0; border:none; border-radius:12px; font-size:16px; }
+    body { background: linear-gradient(135deg,#1e3c72,#2a5298); color:white; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+    .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); border-radius:20px; padding:40px 30px; width:100%; max-width:450px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align:center; }
+    h1 { font-size:30px; margin-bottom:10px; }
+    p { opacity:0.8; margin-bottom:20px; }
+    input, button { width:100%; padding:14px; margin:10px 0; border:none; border-radius:12px; font-size:16px; }
     input { background:rgba(255,255,255,0.2); color:white; }
     input::placeholder { color:rgba(255,255,255,0.7); }
     button { background:#00d26a; color:white; font-weight:bold; cursor:pointer; transition:.3s; }
     button:hover { background:#00b359; transform:translateY(-2px); }
-    .status { text-align:center; margin-top:15px; font-size:14px; opacity:0.8; }
-    .error { color:#ff6b6b; background:rgba(255,107,107,0.1); padding:10px; border-radius:8px; margin:10px 0; text-align:center; }
+    .status { margin-top:15px; font-size:14px; opacity:0.8; }
+    .error { color:#ff6b6b; background: rgba(255,107,107,0.1); padding:10px; border-radius:8px; margin:10px 0; }
+    .field-group { display:flex; gap:10px; flex-direction:column; }
   </style>
 </head>
 <body>
@@ -29,9 +30,11 @@
     </div>
 
     <div id="bot" style="display:none;">
-      <input type="text" id="channel" placeholder="Masukkan channel (contoh: xqc)" />
-      <input type="text" id="message" placeholder="Masukkan pesan" />
-      <button onclick="sendMessage()">Kirim Pesan</button>
+      <div class="field-group">
+        <input type="text" id="channel" placeholder="Masukkan channel (contoh: xqc)" />
+        <input type="text" id="message" placeholder="Masukkan pesan" />
+        <button onclick="sendMessage()">Kirim Pesan</button>
+      </div>
       <div class="status" id="status">Siap...</div>
     </div>
 
@@ -70,7 +73,7 @@
         } else {
           showError('Gagal login.');
         }
-      } catch (err) { showError(err.message); }
+      } catch(err) { showError(err.message); }
     }
 
     async function sendMessage() {
