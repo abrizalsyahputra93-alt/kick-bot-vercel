@@ -1,13 +1,12 @@
 import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  const { channel, message, token } = req.body;
-  if (!channel || !message || !token) return res.status(400).json({ error: 'Missing parameters' });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  const { token, channel, message } = req.body;
+  if (!token || !channel || !message) return res.status(400).json({ error: 'Missing data' });
 
   try {
-    const response = await fetch(`https://kick.com/api/v2/channels/${channel}/messages`, {
+    const r = await fetch(`https://kick.com/api/v1/channels/${channel}/messages`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -15,12 +14,9 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({ content: message })
     });
-
-    const data = await response.json();
-    if (data.error) return res.status(400).json(data);
-
-    res.status(200).json({ message: 'Pesan terkirim!' });
-  } catch(err) {
+    const data = await r.json();
+    res.json(data);
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 }
