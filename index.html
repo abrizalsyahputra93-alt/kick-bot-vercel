@@ -1,72 +1,66 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kick Bot Padang</title>
-<style>
-  body { font-family: 'Segoe UI', sans-serif; background: #1e3c72; color: white; display:flex; justify-content:center; align-items:center; height:100vh; }
-  .card { background: rgba(255,255,255,0.1); padding: 30px; border-radius:20px; backdrop-filter: blur(10px); }
-  input, button { width:100%; margin:8px 0; padding:12px; border-radius:10px; border:none; font-size:16px; }
-  button { background:#00d26a; font-weight:bold; color:white; cursor:pointer; }
-  button:hover { background:#00b359; }
-  .status { margin-top:10px; font-size:14px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kick Bot Padang Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 30px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    h1 { text-align: center; margin-bottom: 10px; font-size: 28px; }
+    p { text-align: center; margin-bottom: 20px; opacity: 0.9; }
+    input, button { width: 100%; padding: 14px; margin: 10px 0; border: none; border-radius: 12px; font-size: 16px; }
+    input { background: rgba(255,255,255,0.2); color: white; }
+    input::placeholder { color: rgba(255,255,255,0.7); }
+    button { background: #00d26a; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    button:hover { background: #00b359; transform: translateY(-2px); }
+    .status { text-align: center; margin-top: 15px; font-size: 14px; opacity: 0.8; }
+    .error { color: #ff6b6b; background: rgba(255,107,107,0.1); padding: 10px; border-radius: 8px; margin: 10px 0; text-align: center; }
+    .chat-log { margin-top: 20px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; max-height: 200px; overflow-y: auto; font-size: 14px; }
+    .chat-log p { margin: 5px 0; }
+  </style>
 </head>
 <body>
-<div class="card">
-  <h1>Kick Bot Padang</h1>
-  <div id="login">
-    <button onclick="login()">Login dengan Kick</button>
+  <div class="card">
+    <h1>Kick Bot Padang Demo</h1>
+    <p>Simulasi bot chat (HTML-only)</p>
+
+    <div id="bot">
+      <input type="text" id="channel" placeholder="Masukkan channel (contoh: xqc)" />
+      <input type="text" id="message" placeholder="Ketik pesan untuk dikirim" />
+      <button onclick="sendMessage()">Kirim Pesan</button>
+      <div class="status" id="status">Siap...</div>
+      <div class="chat-log" id="chatLog"></div>
+    </div>
+
+    <div id="error" class="error" style="display:none;"></div>
   </div>
 
-  <div id="bot" style="display:none;">
-    <input type="text" id="channel" placeholder="Nama channel">
-    <input type="text" id="message" placeholder="Pesan yang dikirim">
-    <button onclick="sendMessage()">Kirim Pesan</button>
-    <div class="status" id="status"></div>
-  </div>
-</div>
+  <script>
+    function showError(msg) {
+      const e = document.getElementById('error');
+      e.textContent = msg;
+      e.style.display = 'block';
+      setTimeout(() => { e.style.display = 'none'; }, 4000);
+    }
 
-<script>
-const CLIENT_ID = '01K9SEDGKEAB4KH7WAJ8Q2XGVD';
-const REDIRECT_URI = 'https://kick-bot-vercel.vercel.app/api/auth';
-let token = null;
+    function sendMessage() {
+      const channel = document.getElementById('channel').value.trim();
+      const message = document.getElementById('message').value.trim();
+      if (!channel) return showError('Masukkan channel!');
+      if (!message) return showError('Masukkan pesan!');
 
-function login() {
-  const params = new URLSearchParams({
-    client_id: CLIENT_ID,
-    redirect_uri: REDIRECT_URI,
-    response_type: 'code',
-    scope: 'chat:read chat:write',
-    state: 'kick-bot-padang'
-  });
-  window.location.href = `https://kick.com/oauth/authorize?${params.toString()}`;
-}
+      // Simulasi kirim pesan
+      const log = document.getElementById('chatLog');
+      const p = document.createElement('p');
+      p.textContent = `[${new Date().toLocaleTimeString()}] #${channel}: ${message}`;
+      log.appendChild(p);
+      log.scrollTop = log.scrollHeight;
 
-// Ambil token dari query string
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('token')) {
-  token = urlParams.get('token');
-  document.getElementById('login').style.display = 'none';
-  document.getElementById('bot').style.display = 'block';
-  document.getElementById('status').innerText = 'Login sukses!';
-}
-
-async function sendMessage() {
-  const channel = document.getElementById('channel').value;
-  const message = document.getElementById('message').value;
-  if (!token) return alert('Login dulu!');
-  if (!channel || !message) return alert('Isi channel dan message!');
-
-  const res = await fetch('/api/bot', {
-    method: 'POST',
-    headers: { 'Content-Type':'application/json' },
-    body: JSON.stringify({ token, channel, message })
-  });
-  const data = await res.json();
-  document.getElementById('status').innerText = data.success ? 'Pesan terkirim!' : 'Gagal kirim';
-}
-</script>
+      document.getElementById('status').textContent = `Pesan dikirim ke #${channel} (simulasi)`;
+      document.getElementById('message').value = '';
+    }
+  </script>
 </body>
 </html>
