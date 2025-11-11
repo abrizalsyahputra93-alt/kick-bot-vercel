@@ -1,21 +1,23 @@
+// api/bot.js
 import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  if (req.method !== 'POST') return res.status(405).end();
+
   const { token, channel, message } = req.body;
-  if (!token || !channel || !message) return res.status(400).json({ error: 'Missing data' });
+  if (!token || !channel || !message) return res.status(400).json({ error: 'Missing fields' });
 
   try {
-    const r = await fetch(`https://kick.com/api/v1/channels/${channel}/messages`, {
+    const response = await fetch(`https://kick.com/api/v1/channels/${channel}/chat`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ content: message })
+      body: JSON.stringify({ message })
     });
-    const data = await r.json();
-    res.json(data);
+    const data = await response.json();
+    res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
