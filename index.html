@@ -1,47 +1,37 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kick Bot Padang</title>
 <style>
-* {margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
-body{background:linear-gradient(135deg,#1e3c72,#2a5298);color:white;display:flex;justify-content:center;align-items:center;height:100vh;}
-.card{background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);padding:30px;border-radius:20px;width:100%;max-width:400px;box-shadow:0 10px 30px rgba(0,0,0,0.3);}
-h1{text-align:center;margin-bottom:10px;}
-p{text-align:center;margin-bottom:20px;opacity:0.9;}
-input,button{width:100%;padding:14px;margin:10px 0;border:none;border-radius:12px;font-size:16px;}
-input{background:rgba(255,255,255,0.2);color:white;}
-input::placeholder{color:rgba(255,255,255,0.7);}
-button{background:#00d26a;color:white;font-weight:bold;cursor:pointer;transition:.3s;}
-button:hover{background:#00b359;}
-.status{text-align:center;margin-top:15px;font-size:14px;opacity:0.8;}
-.error{color:#ff6b6b;background:rgba(255,107,107,0.1);padding:10px;border-radius:8px;margin:10px 0;text-align:center;}
+  body { font-family: 'Segoe UI', sans-serif; background: #1e3c72; color: white; display:flex; justify-content:center; align-items:center; height:100vh; }
+  .card { background: rgba(255,255,255,0.1); padding: 30px; border-radius:20px; backdrop-filter: blur(10px); }
+  input, button { width:100%; margin:8px 0; padding:12px; border-radius:10px; border:none; font-size:16px; }
+  button { background:#00d26a; font-weight:bold; color:white; cursor:pointer; }
+  button:hover { background:#00b359; }
+  .status { margin-top:10px; font-size:14px; }
 </style>
 </head>
 <body>
 <div class="card">
-<h1>Kick Bot Padang</h1>
-<p>Bot chat dari Sumatera Barat</p>
+  <h1>Kick Bot Padang</h1>
+  <div id="login">
+    <button onclick="login()">Login dengan Kick</button>
+  </div>
 
-<div id="login">
-  <button onclick="login()">Login dengan Kick</button>
-</div>
-
-<div id="bot" style="display:none;">
-  <input type="text" id="channel" placeholder="Channel"/>
-  <input type="text" id="message" placeholder="Message"/>
-  <button onclick="sendMessage()">Kirim</button>
-  <div class="status" id="status">Siap...</div>
-</div>
-
-<div id="error" class="error" style="display:none;"></div>
+  <div id="bot" style="display:none;">
+    <input type="text" id="channel" placeholder="Nama channel">
+    <input type="text" id="message" placeholder="Pesan yang dikirim">
+    <button onclick="sendMessage()">Kirim Pesan</button>
+    <div class="status" id="status"></div>
+  </div>
 </div>
 
 <script>
 const CLIENT_ID = '01K9SEDGKEAB4KH7WAJ8Q2XGVD';
 const REDIRECT_URI = 'https://kick-bot-vercel.vercel.app/api/auth';
-let accessToken = null;
+let token = null;
 
 function login() {
   const params = new URLSearchParams({
@@ -54,46 +44,29 @@ function login() {
   window.location.href = `https://kick.com/oauth/authorize?${params.toString()}`;
 }
 
-async function handleRedirect() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const code = urlParams.get('code');
-  if (code) {
-    try {
-      const res = await fetch(`${REDIRECT_URI}?code=${code}`);
-      const data = await res.json();
-      if (data.access_token) {
-        accessToken = data.access_token;
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('bot').style.display = 'block';
-        document.getElementById('status').textContent = 'Login sukses!';
-        history.replaceState({}, '', '/');
-      }
-    } catch(err) { showError(err.message); }
-  }
+// Ambil token dari query string
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('token')) {
+  token = urlParams.get('token');
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('bot').style.display = 'block';
+  document.getElementById('status').innerText = 'Login sukses!';
 }
 
 async function sendMessage() {
-  const channel = document.getElementById('channel').value.trim();
-  const message = document.getElementById('message').value.trim();
-  if (!channel || !message || !accessToken) return showError('Isi semua field!');
-  try {
-    const res = await fetch('/api/bot', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ token: accessToken, channel, message })
-    });
-    const data = await res.json();
-    document.getElementById('status').textContent = data.error ? `Error: ${data.error}` : 'Pesan terkirim!';
-  } catch(err) { showError(err.message); }
-}
+  const channel = document.getElementById('channel').value;
+  const message = document.getElementById('message').value;
+  if (!token) return alert('Login dulu!');
+  if (!channel || !message) return alert('Isi channel dan message!');
 
-function showError(msg) {
-  const e = document.getElementById('error');
-  e.textContent = msg; e.style.display='block';
-  setTimeout(()=>{e.style.display='none'},5000);
+  const res = await fetch('/api/bot', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({ token, channel, message })
+  });
+  const data = await res.json();
+  document.getElementById('status').innerText = data.success ? 'Pesan terkirim!' : 'Gagal kirim';
 }
-
-window.addEventListener('load', handleRedirect);
 </script>
 </body>
 </html>
